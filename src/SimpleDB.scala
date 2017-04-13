@@ -1,9 +1,12 @@
-import akka.actor.Actor
+import akka.actor.{Actor, ActorSystem, Props, Status}
 import akka.event.Logging
 
 import scala.collection.mutable
 
 case class SetRequest(key: String, value: Object)
+case class GetRequest(key: String)
+case class KeyNotFoundException(key: String) extends Exception
+case class UnknownRequest(req: Any) extends Exception
 
 class SimpleDB extends Actor {
 
@@ -14,8 +17,18 @@ class SimpleDB extends Actor {
     case SetRequest(key, value) =>
       log.info("received SetRequest: key = {}, value = {}", key, value)
       map.put(key, value)
-    case msg =>
-      log.info("received unknown message: {}", msg)
+      sender() ! Status.Success
+    case GetRequest(key) =>
+      log.info("received GetRequest: key = {}", key)
+      map.get(key).fold(sender() ! Status.Failure(KeyNotFoundException(key))) {
+        sender() ! _
+      }
+    case req => sender() ! Status.Failure(UnknownRequest(req))
   }
 
+}
+
+object Main extends App {
+  val system = ActorSystem("simpledb")
+  system.actorOf(Props[SimpleDB], name="SimpleDB")
 }

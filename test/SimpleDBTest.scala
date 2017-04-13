@@ -1,5 +1,6 @@
 import akka.actor.ActorSystem
 import akka.testkit.TestActorRef
+import com.typesafe.config.ConfigFactory
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -7,7 +8,8 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class SimpleDBTest extends FunSuite {
 
-  implicit val system = ActorSystem()
+  private val testConf = ConfigFactory.parseString("akka.loglevel = OFF")
+  private implicit val system = ActorSystem("TestDB", testConf)
 
   test("SetRequest puts key/value into the map") {
     val actor = TestActorRef(new SimpleDB)
